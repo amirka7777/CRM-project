@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/yukay/CRM/internal/middleware"
 	"github.com/yukay/CRM/internal/models"
 	"github.com/yukay/CRM/internal/service"
 )
@@ -16,12 +17,6 @@ type HandlerSupport struct {
 
 func NewHandlerSupport(serv *service.ServiceSupport) *HandlerSupport {
 	return &HandlerSupport{Serv: serv}
-}
-
-func Ping(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	w.Write([]byte(`{"message": "pong"}`))
 }
 
 func (h *HandlerSupport) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -54,4 +49,58 @@ func (h *HandlerSupport) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 
+}
+
+func (h *HandlerSupport) LoginUser(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Данный метод не подддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var user models.UserRequest
+	defer r.Body.Close()
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Ошибка при декодировании данных", http.StatusBadRequest)
+		log.Println("Ошибка при декодировании данных: ", err)
+		return
+	}
+
+	userID, err := h.Serv.CheckLoginUser(user.Email, user.Password)
+	if err != nil {
+		http.Error(w, "неверные учетные данные", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := h.Serv.GenerateJWT(userID)
+	if err != nil {
+		http.Error(w, "внутрення ошибка сервера связанная с токеном", http.StatusInternalServerError)
+		return
+	}
+	response := map[string]string{
+		"token": token,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func (h *HandlerSupport) Me(w http.ResponseWriter, r *http.Request) {
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "пользователь не авторизован", http.StatusUnauthorized)
+		return
+	}
+	log.Printf("Запрос от пользователя с ID: %d", userID)
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(userID)
+	if err != nil {
+		http.Error(w, "Ошибка при декодировании", http.StatusUnauthorized)
+		return
+	}
 }
