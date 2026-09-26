@@ -46,3 +46,16 @@ func (r *ReposirotySupport) GetUserByEmail(email string) (*models.UserLoginCheck
 	return user, nil
 
 }
+
+func (r *ReposirotySupport) CreateContact(user_id int, name, email, phone string, created_at time.Time) error {
+
+	query := `INSERT INTO contacts (user_id, name, email, phone, created_at) VALUES (?, ?, ?, ?, ?)`
+
+	_, err := r.db.Exec(query, user_id, name, email, phone, created_at)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

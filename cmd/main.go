@@ -47,6 +47,7 @@ func main() {
 	http.HandleFunc("/auth/register", handler.CreateUser)
 	http.HandleFunc("/auth/login", handler.LoginUser)
 	http.Handle("/me", middleware.AuthMiddleware(secretKey)(http.HandlerFunc(handler.Me)))
+	http.Handle("/contacts", middleware.AuthMiddleware(secretKey)(http.HandlerFunc(handler.CreateContact)))
 
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

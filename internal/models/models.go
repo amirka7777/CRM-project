@@ -22,3 +22,9 @@ type Claims struct {
 	UserId int `json:"user_id"`
 	jwt.RegisteredClaims
 }
+
+type CreateContactRequest struct {
+	Name  string
+	Email string
+	Phone string
+}

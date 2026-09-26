@@ -83,3 +83,15 @@ func (s *ServiceSupport) LoginUser(email, password string) (string, error) {
 	return token, nil
 
 }
+
+func (s *ServiceSupport) CreateContact(userId int, name, email, phone string) error {
+
+	created := time.Now()
+	err := s.repo.CreateContact(userId, name, email, phone, created)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

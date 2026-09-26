@@ -46,8 +46,17 @@ func (h *HandlerSupport) CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Ошибка при добавлении юзера в бд: ", err)
 		return
 	}
+	response := map[string]string{
+		"message": "user registered",
+	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println("ошибка при кодировки JSON: ", err)
+		return
+	}
 
 }
 
@@ -103,4 +112,44 @@ func (h *HandlerSupport) Me(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка при декодировании", http.StatusUnauthorized)
 		return
 	}
+}
+
+func (h *HandlerSupport) CreateContact(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "данный метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "Внутренняя ошибка сервера", http.StatusInternalServerError)
+		return
+	}
+
+	var modelCreateContact models.CreateContactRequest
+	defer r.Body.Close()
+	err := json.NewDecoder(r.Body).Decode(&modelCreateContact)
+	if err != nil {
+		http.Error(w, "некорректный формат JSON или неверные типы данных", http.StatusBadRequest)
+		return
+	}
+
+	err = h.Serv.CreateContact(userID, modelCreateContact.Name, modelCreateContact.Email, modelCreateContact.Phone)
+	if err != nil {
+		http.Error(w, "ошибка авторизации", http.StatusUnauthorized)
+		return
+	}
+	response := map[string]string{
+		"message": "contact created",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println("ошибка при кодировки JSON: ", err)
+		return
+	}
+
 }
