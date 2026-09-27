@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -57,5 +58,35 @@ func (r *ReposirotySupport) CreateContact(user_id int, name, email, phone string
 	}
 
 	return nil
+
+}
+
+func (r *ReposirotySupport) GetContactsByID(userID int) ([]models.Contact, error) {
+
+	query := `SELECT * FROM contacts WHERE user_id = ?`
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	contacts := []models.Contact{}
+
+	defer rows.Close()
+	for rows.Next() {
+		var c models.Contact
+		err := rows.Scan(&c.Id, &c.User_id, &c.Name, &c.Email, &c.Phone, &c.Created_at)
+		if err != nil {
+			log.Println("ошибка при вызове скан при SELECT из бд: ", err)
+			continue
+		}
+
+		contacts = append(contacts, c)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return contacts, nil
 
 }

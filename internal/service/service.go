@@ -95,3 +95,14 @@ func (s *ServiceSupport) CreateContact(userId int, name, email, phone string) er
 	return nil
 
 }
+
+func (s *ServiceSupport) GetContacts(userId int) ([]models.Contact, error) {
+
+	contacts, err := s.repo.GetContactsByID(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return contacts, nil
+
+}

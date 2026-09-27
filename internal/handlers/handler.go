@@ -153,3 +153,31 @@ func (h *HandlerSupport) CreateContact(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (h *HandlerSupport) GetContacts(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "данный метод недоступен", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "не авторизован", http.StatusUnauthorized)
+		return
+	}
+
+	contacts, err := h.Serv.GetContacts(userID)
+	if err != nil {
+		http.Error(w, "внутрення ошибка сервера", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(contacts)
+	if err != nil {
+		log.Println("ошибка при кодировании данных: ", err)
+		return
+	}
+
+}

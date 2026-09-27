@@ -28,3 +28,12 @@ type CreateContactRequest struct {
 	Email string
 	Phone string
 }
+
+type Contact struct {
+	Id         int
+	User_id    int
+	Name       string
+	Email      string
+	Phone      string
+	Created_at time.Time
+}
