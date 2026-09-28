@@ -98,11 +98,37 @@ func (s *ServiceSupport) CreateContact(userId int, name, email, phone string) er
 
 func (s *ServiceSupport) GetContacts(userId int) ([]models.Contact, error) {
 
-	contacts, err := s.repo.GetContactsByID(userId)
+	contacts, err := s.repo.GetContactsByUserID(userId)
 	if err != nil {
 		return nil, err
 	}
 
 	return contacts, nil
+
+}
+
+func (s *ServiceSupport) GetContactByID(userID, contactID int) (*models.Contact, error) {
+
+	contact, err := s.repo.GetContactByIDAndUserId(contactID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return contact, nil
+
+}
+
+func (s *ServiceSupport) DeleteContactByID(userID, contactID int) error {
+
+	rowsDelete, err := s.repo.DeleteContactByID(contactID, userID)
+	if err != nil {
+		return err
+	}
+
+	if rowsDelete == 0 {
+		return fmt.Errorf("not found")
+	}
+
+	return nil
 
 }

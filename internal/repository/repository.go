@@ -61,7 +61,7 @@ func (r *ReposirotySupport) CreateContact(user_id int, name, email, phone string
 
 }
 
-func (r *ReposirotySupport) GetContactsByID(userID int) ([]models.Contact, error) {
+func (r *ReposirotySupport) GetContactsByUserID(userID int) ([]models.Contact, error) {
 
 	query := `SELECT * FROM contacts WHERE user_id = ?`
 	rows, err := r.db.Query(query, userID)
@@ -88,5 +88,40 @@ func (r *ReposirotySupport) GetContactsByID(userID int) ([]models.Contact, error
 	}
 
 	return contacts, nil
+
+}
+
+func (r *ReposirotySupport) GetContactByIDAndUserId(contactID, userID int) (*models.Contact, error) {
+
+	query := `SELECT id, user_id, name, email, phone, created_at FROM contacts WHERE id = ? AND user_id = ?`
+	contact := &models.Contact{}
+	row := r.db.QueryRow(query, contactID, userID)
+	err := row.Scan(&contact.Id, &contact.User_id, &contact.Name, &contact.Email, &contact.Phone, &contact.Created_at)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("нет контакта в бд")
+		}
+		return nil, err
+	}
+
+	return contact, nil
+
+}
+
+func (r *ReposirotySupport) DeleteContactByID(contactID, userID int) (int64, error) {
+
+	query := `DELETE FROM contacts WHERE id = ? AND user_id = ?`
+
+	result, err := r.db.Exec(query, contactID, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsDelete, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsDelete, nil
 
 }

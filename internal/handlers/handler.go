@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/yukay/CRM/internal/middleware"
@@ -179,5 +180,81 @@ func (h *HandlerSupport) GetContacts(w http.ResponseWriter, r *http.Request) {
 		log.Println("ошибка при кодировании данных: ", err)
 		return
 	}
+
+}
+
+func (h *HandlerSupport) GetContactByID(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "данный метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "ошибка авторизации", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	contactID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ошибка невалидных данных", http.StatusBadRequest)
+		return
+	}
+	contact, err := h.Serv.GetContactByID(userID, contactID)
+	if err != nil {
+		if err.Error() == "нет контакта в бд" {
+			http.Error(w, "сущность не найдена в бд", http.StatusNotFound)
+			return
+		}
+
+		log.Printf("ошибка получения контакта (userID: %d, contactID: %d): %v", userID, contactID, err)
+		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(contact)
+	if err != nil {
+		log.Println("ошибка при кодировании: ", err)
+		return
+	}
+
+}
+
+func (h *HandlerSupport) DeleteContactByID(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodDelete {
+		http.Error(w, "данный метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "ошибка авторизации", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	contactID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ошибка невалидных данных", http.StatusBadRequest)
+		return
+	}
+
+	err = h.Serv.DeleteContactByID(userID, contactID)
+	if err != nil {
+		if err.Error() == "not found" {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
+		log.Println("ошибка при удалении контакта: ", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 
 }
