@@ -258,3 +258,47 @@ func (h *HandlerSupport) DeleteContactByID(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 
 }
+
+func (h *HandlerSupport) UpdateContact(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPut {
+		http.Error(w, "данный метод не поддерживаетя", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		http.Error(w, "ошибка авторизации", http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	contactID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ошибка валидации данных", http.StatusBadRequest)
+		return
+	}
+
+	var request models.UpdateContact
+	defer r.Body.Close()
+	err = json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "ошибка JSON формата", http.StatusBadRequest)
+		return
+	}
+
+	err = h.Serv.UpdateContact(userID, contactID, request.Name, request.Email, request.Phone)
+	if err != nil {
+		if err.Error() == "not found" {
+			http.Error(w, "объект не найден", http.StatusNotFound)
+			return
+		}
+
+		http.Error(w, "внутренняя ошибка сервера", http.StatusInternalServerError)
+		log.Println("ошибка при обновлении объекта: ", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}

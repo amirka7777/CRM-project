@@ -125,3 +125,20 @@ func (r *ReposirotySupport) DeleteContactByID(contactID, userID int) (int64, err
 	return rowsDelete, nil
 
 }
+
+func (r *ReposirotySupport) UpdateContact(userID, contactID int, name, email, phone string) (int64, error) {
+
+	query := `UPDATE contacts SET name = ?, email = ?, phone = ? WHERE id = ? AND user_id = ?`
+	result, err := r.db.Exec(query, name, email, phone, contactID, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffec, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffec, nil
+
+}

@@ -46,8 +46,36 @@ func main() {
 
 	http.HandleFunc("/auth/register", handler.CreateUser)
 	http.HandleFunc("/auth/login", handler.LoginUser)
+
 	http.Handle("/me", middleware.AuthMiddleware(secretKey)(http.HandlerFunc(handler.Me)))
-	http.Handle("/contacts", middleware.AuthMiddleware(secretKey)(http.HandlerFunc(handler.CreateContact)))
+
+	http.Handle("/contacts", middleware.AuthMiddleware(secretKey)(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				handler.GetContacts(w, r)
+			case http.MethodPost:
+				handler.CreateContact(w, r)
+			default:
+				http.Error(w, "метод не поддерживается", http.StatusMethodNotAllowed)
+			}
+		}),
+	))
+
+	http.Handle("/contacts/{id}", middleware.AuthMiddleware(secretKey)(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.Method {
+			case http.MethodGet:
+				handler.GetContactByID(w, r)
+			case http.MethodPut:
+				handler.UpdateContact(w, r)
+			case http.MethodDelete:
+				handler.DeleteContactByID(w, r)
+			default:
+				http.Error(w, "метод не поддерживается", http.StatusMethodNotAllowed)
+			}
+		}),
+	))
 
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

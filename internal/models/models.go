@@ -37,3 +37,9 @@ type Contact struct {
 	Phone      string
 	Created_at time.Time
 }
+
+type UpdateContact struct {
+	Name  string
+	Email string
+	Phone string
+}

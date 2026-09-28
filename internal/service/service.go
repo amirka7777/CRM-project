@@ -132,3 +132,18 @@ func (s *ServiceSupport) DeleteContactByID(userID, contactID int) error {
 	return nil
 
 }
+
+func (s *ServiceSupport) UpdateContact(userID, contactID int, name, email, phone string) error {
+
+	rowsAffected, err := s.repo.UpdateContact(userID, contactID, name, email, phone)
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("not found")
+	}
+
+	return nil
+
+}
